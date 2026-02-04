@@ -1,19 +1,33 @@
 #!/bin/sh
 
 << 'MULTILINE_COMMENT'
-This script identifies the unallocated space on the MicroSD card, 
-creates a new partition, and configures auto-mount to /mnt/sda1.
+This script identifies unallocated space on the primary storage device,
+creates a new data partition, and configures auto-mount to /mnt/sda1.
 This ensures data persistence across system re-flashes.
 
-本腳本識別記憶卡上的未分配空間，建立一個新分區，
+This script is designed for general OpenWrt environments.
+
+本腳本識別主儲存裝置上的未分配空間，建立一個新的數據分區，
 並將其設定為自動掛載至 /mnt/sda1。
 這能確保在重新燒錄系統後，數據依然可以保留。
+本腳本適用於一般性的 OpenWrt 環境。
 MULTILINE_COMMENT
 
 # Define disk and partition variables (定義磁碟與分區變數)
+# In most SD-based or MMC-based OpenWrt devices, this is /dev/mmcblk0
 DISK_DEV="/dev/mmcblk0"
 PART_DEV="/dev/mmcblk0p3"
 MOUNT_POINT="/mnt/sda1"
+
+echo "Checking environment and required tools... (檢查環境與必要工具...)"
+
+# Update package list and install requirements if missing (更新套件清單並安裝缺少的必要工具)
+if [ -z "$(which fdisk)" ] || [ -z "$(which mkfs.ext4)" ]; then
+    echo "Required tools missing. Installing fdisk and e2fsprogs... (缺少必要工具，正在安裝 fdisk 與 e2fsprogs...)"
+    opkg update
+    [ -z "$(which fdisk)" ] && opkg install fdisk
+    [ -z "$(which mkfs.ext4)" ] && opkg install e2fsprogs
+fi
 
 echo "Checking disk partition status... (檢查磁碟分區狀態...)"
 
@@ -21,7 +35,7 @@ echo "Checking disk partition status... (檢查磁碟分區狀態...)"
 if [ -b "$PART_DEV" ]; then
     echo "Found existing partition $PART_DEV. Skipping creation... (發現已存在的分區 $PART_DEV，跳過建立步驟...)"
 else
-    echo "Creating new partition (Option B)... (正在建立新分區 (方案 B)...)"
+    echo "Creating new partition... (正在建立新分區...)"
     
     # Use fdisk to create a new primary partition using all remaining space (使用 fdisk 建立新的主要分區，並使用所有剩餘空間)
     (
@@ -34,9 +48,6 @@ else
     ) | fdisk $DISK_DEV
     
     echo "Formatting partition to Ext4... (正在將分區格式化為 Ext4...)"
-    # Install e2fsprogs if mkfs.ext4 is missing (如果缺少 mkfs.ext4 則安裝相關工具)
-    [ -z "$(which mkfs.ext4)" ] && opkg update && opkg install e2fsprogs
-    
     # Force format the new partition (強制格式化新分區)
     mkfs.ext4 -F $PART_DEV
 fi
