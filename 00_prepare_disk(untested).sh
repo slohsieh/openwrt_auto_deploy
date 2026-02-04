@@ -15,7 +15,7 @@ DISK_DEV="/dev/mmcblk0"
 PART_DEV="/dev/mmcblk0p3"
 MOUNT_POINT="/mnt/sda1"
 
-echo "🔍 Checking disk partition status... (檢查磁碟分區狀態...)"
+echo "Checking disk partition status... (檢查磁碟分區狀態...)"
 
 # Check if the data partition already exists (檢查數據分區是否已存在)
 if [ -b "$PART_DEV" ]; then
