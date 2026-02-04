@@ -52,6 +52,13 @@ echo "Changing LAN IP to 192.168.1.1... (正在將 LAN IP 修改為 192.168.1.1.
 uci set network.lan.ipaddr='192.168.1.1'
 uci commit network
 
+# Optional: Disable IPv6 to prevent DNS leaks through ISP (選用：禁用 IPv6 以防止 DNS 洩漏)
+echo "Disabling IPv6 for maximum compatibility... (正在禁用 IPv6 以確保最高相容性...)"
+uci set 'network.lan.ipv6=0'
+uci set 'network.wan.ipv6=0'
+uci set 'network.wan6.disabled=1'
+uci commit network
+
 # Apply changes and restart services (套用更改並重啟服務)
 echo "Applying changes and restarting services... (正在套用更改並重啟服務...)"
 echo "Your SSH connection will drop. Please reconnect using 192.168.1.1. (SSH 連線將中斷，請使用 192.168.1.1 重新連線。)"
