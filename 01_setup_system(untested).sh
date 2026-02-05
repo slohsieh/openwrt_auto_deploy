@@ -11,66 +11,54 @@ Note: Changing the LAN IP will disconnect your current SSH session.
 注意：更改 LAN IP 將會中斷您目前的 SSH 連線。
 MULTILINE_COMMENT
 
-# Define timezone variables (定義時區變數)
+# --- Define Variables (定義變數) ---
 TIMEZONE_STR="CST-8"
 TIMEZONE_NAME="Asia/Taipei"
+LAN_IP="192.168.1.1"
 
+# --- System Timezone (系統時區) ---
 echo "Configuring system timezone... (正在配置系統時區...)"
-
-# Set the timezone string and display name (設定時區字串與顯示名稱)
-uci set system.@system[0].zonename=$TIMEZONE_NAME
-uci set system.@system[0].timezone=$TIMEZONE_STR
+uci set system.@system[0].zonename="$TIMEZONE_NAME"
+uci set system.@system[0].timezone="$TIMEZONE_STR"
 uci commit system
 
-# Configure NTP servers and enable NTP client (配置 NTP 伺服器並啟用 NTP 客戶端)
+# --- NTP Settings (NTP 時間同步) ---
 echo "Setting up NTP settings... (正在設定 NTP 設定...)"
-
-# Clear existing NTP server list (清除現有的 NTP 伺服器清單)
 uci delete system.ntp.server
 uci add_list system.ntp.server='0.tw.pool.ntp.org'
 uci add_list system.ntp.server='1.tw.pool.ntp.org'
 uci add_list system.ntp.server='time.google.com'
 uci add_list system.ntp.server='time.windows.com'
-
-# Enable NTP client (啟用 NTP 客戶端)
 uci set system.ntp.enable_server='0'
 uci set system.ntp.enabled='1'
 uci commit system
 
-# Scheduled Reboot Setting (定時重啟設定)
+# --- Scheduled Reboot (定時重啟) ---
 echo "Configuring scheduled reboot every Monday at 06:00... (正在設定每週一 06:00 定時重啟...)"
-
-# Add cron job: 06:00 on Monday (Day 1) (加入計畫任務：週一 06:00)
-# Format: Minute Hour Day Month Weekday Command
 CRON_REBOOT="0 6 * * 1 reboot"
 if ! grep -q "$CRON_REBOOT" /etc/crontabs/root; then
     echo "$CRON_REBOOT" >> /etc/crontabs/root
 fi
 
-# Change LAN IP Address (修改 LAN IP 地址)
-echo "Changing LAN IP to 192.168.1.1... (正在將 LAN IP 修改為 192.168.1.1...)"
-uci set network.lan.ipaddr='192.168.1.1'
+# --- Network: LAN IP Address (修改 LAN IP) ---
+echo "Changing LAN IP to $LAN_IP... (正在將 LAN IP 修改為 $LAN_IP...)"
+uci set network.lan.ipaddr="$LAN_IP"
 uci commit network
 
-# Optional: Disable IPv6 to prevent DNS leaks through ISP (選用：禁用 IPv6 以防止 DNS 洩漏)
-echo "Disabling IPv6 for maximum compatibility... (正在禁用 IPv6 以確保最高相容性...)"
+# --- Network: Disable IPv6 (禁用 IPv6) ---
+echo "Disabling IPv6 for maximum compatibility... (正在禁用 IPv6...)"
 uci set 'network.lan.ipv6=0'
 uci set 'network.wan.ipv6=0'
 uci set 'network.wan6.disabled=1'
 uci commit network
 
-# 限制 SSH 僅監聽 LAN IP (192.168.1.1)
-# 將 SSH 埠號從 22 改為 2222
-uci set dropbear.@dropbear[0].Interface='lan'
-uci set dropbear.@dropbear[0].Port='2256'
-uci commit dropbear
-/etc/init.d/dropbear restart
+# --- Apply Changes and Restart Services (套用更改與重啟服務) ---
+echo "-------------------------------------------------------"
+echo "Applying changes and restarting services..."
+echo "Your SSH connection will drop. Please reconnect using $LAN_IP."
+echo "SSH 連線將中斷，請稍後使用 $LAN_IP 重新連線。"
+echo "-------------------------------------------------------"
 
-# Apply changes and restart services (套用更改並重啟服務)
-echo "Applying changes and restarting services... (正在套用更改並重啟服務...)"
-echo "Your SSH connection will drop. Please reconnect using 192.168.1.1. (SSH 連線將中斷，請使用 192.168.1.1 重新連線。)"
-
-# Execute service restarts (執行服務重啟)
 /etc/init.d/system restart
 /etc/init.d/sysntpd restart
 /etc/init.d/cron enable
