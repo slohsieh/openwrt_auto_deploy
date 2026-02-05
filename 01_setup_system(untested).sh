@@ -59,6 +59,13 @@ uci set 'network.wan.ipv6=0'
 uci set 'network.wan6.disabled=1'
 uci commit network
 
+# 限制 SSH 僅監聽 LAN IP (192.168.1.1)
+# 將 SSH 埠號從 22 改為 2222
+uci set dropbear.@dropbear[0].Interface='lan'
+uci set dropbear.@dropbear[0].Port='2256'
+uci commit dropbear
+/etc/init.d/dropbear restart
+
 # Apply changes and restart services (套用更改並重啟服務)
 echo "Applying changes and restarting services... (正在套用更改並重啟服務...)"
 echo "Your SSH connection will drop. Please reconnect using 192.168.1.1. (SSH 連線將中斷，請使用 192.168.1.1 重新連線。)"
