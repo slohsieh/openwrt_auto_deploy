@@ -16,11 +16,9 @@ mkdir -p /opt/adguardhome/work
 docker run -d \
   --name adguardhome \
   --restart unless-stopped \
+  --network host \
   -v /opt/adguardhome/conf:/opt/adguardhome/conf \
   -v /opt/adguardhome/work:/opt/adguardhome/work \
-  -p 53:53/tcp -p 53:53/udp \
-  -p 3000:3000/tcp \
   adguard/adguardhome
-
 # Check container status (檢查容器狀態)
 docker ps | grep adguardhome
