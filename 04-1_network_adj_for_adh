@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# =================================================================
+# Network Takeover Script (IPv4 Only)
+# This script moves dnsmasq to port 54 and sets AGH as the primary DNS.
+# 網路接管腳本 (僅限 IPv4)
+# 此腳本將 dnsmasq 移至 54 埠，並設定 AGH 為主要 DNS。
+# =================================================================
+
+# Get the Router IPv4 Address (獲取路由器的第一組 IPv4 地址)
+NET_ADDR=$(/sbin/ip -o -4 addr list br-lan | awk 'NR==1{ split($4, ip_addr, "/"); print ip_addr[1]; exit }')
+
+echo "Configuring network for Router IP: ${NET_ADDR}"
+
+# Move dnsmasq to port 54 to avoid conflict with AGH (將 dnsmasq 移至 54 埠以避免與 AGH 衝突)
+uci set dhcp.@dnsmasq[0].port="54"
+
+# Set local domain and ensure internal resolution
+# 設定本地網域並確保內網解析正常
+uci set dhcp.@dnsmasq[0].domain="lan"
+uci set dhcp.@dnsmasq[0].local="/lan/"
+uci set dhcp.@dnsmasq[0].expandhosts="1"
+
+# Disable dnsmasq cache and external resolution
+# 禁用 dnsmasq 快取與外部解析功能
+uci set dhcp.@dnsmasq[0].cachesize="0"
+uci set dhcp.@dnsmasq[0].noresolv="1"
+uci -q del dhcp.@dnsmasq[0].server
+
+# Clean up existing DHCP DNS options (清除現有的 DHCP DNS 選項)
+uci -q del dhcp.lan.dhcp_option
+uci -q del dhcp.lan.dns
+
+# Set DHCP Option 3 (Gateway) and Option 6 (DNS)
+# 設定 DHCP 選項 3 (網關) 與選項 6 (DNS)
+uci add_list dhcp.lan.dhcp_option='3,'"${NET_ADDR}"
+uci add_list dhcp.lan.dhcp_option='6,'"${NET_ADDR}" 
+
+# Set DHCP Option 15 for domain suffix (設定 DHCP 選項 15 以提供網域後綴)
+uci add_list dhcp.lan.dhcp_option='15,'"lan"
+
+# Apply changes and restart services
+# 應用更改並重啟相關服務
+uci commit dhcp
+/etc/init.d/dnsmasq restart
+/etc/init.d/odhcpd restart
+
+echo "Network setup complete! (網路設定完成！)"
