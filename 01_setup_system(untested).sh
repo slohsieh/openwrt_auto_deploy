@@ -1,14 +1,12 @@
 #!/bin/sh
 
 << 'MULTILINE_COMMENT'
-This script configures the system timezone, NTP settings, updates the 
-LAN IP address to 192.168.1.1, and sets a scheduled reboot every 
-Monday at 06:00 AM.
-Note: Changing the LAN IP will disconnect your current SSH session.
+This script configures the system timezone, NTP settings, increases the 
+log buffer size, and sets a scheduled reboot every Monday at 06:00 AM.
+It also disables IPv6 for better compatibility.
 
-本腳本配置系統時區、NTP 設定、將 LAN IP 地址更改為 192.168.1.1，
+本腳本配置系統時區、NTP 設定、加大系統日誌緩衝區、禁用 IPv6，
 並設定每週一早上 06:00 自動重啟。
-注意：更改 LAN IP 將會中斷您目前的 SSH 連線。
 MULTILINE_COMMENT
 
 # --- Define Variables (定義變數) ---
@@ -22,8 +20,8 @@ uci set system.@system[0].timezone="$TIMEZONE_STR"
 uci commit system
 
 # --- System: Increase Log Buffer Size (加大系統日誌緩衝區) ---
-echo "Increasing system log buffer size... (正在加大系統日誌緩衝區...)"
-uci set system.@system[0].log_size='1024'
+echo "Increasing system log buffer size to 1MB... (正在加大系統日誌緩衝區至 1MB...)"
+uci set system.@system[0].log_size='512'
 uci commit system
 
 # --- NTP Settings (NTP 時間同步) ---
@@ -40,7 +38,9 @@ uci commit system
 # --- Scheduled Reboot (定時重啟) ---
 echo "Configuring scheduled reboot every Monday at 06:00... (正在設定每週一 06:00 定時重啟...)"
 CRON_REBOOT="0 6 * * 1 reboot"
-if ! grep -q "$CRON_REBOOT" /etc/crontabs/root; then
+# 確保目錄存在
+mkdir -p /etc/crontabs
+if ! grep -q "$CRON_REBOOT" /etc/crontabs/root 2>/dev/null; then
     echo "$CRON_REBOOT" >> /etc/crontabs/root
 fi
 
@@ -54,8 +54,7 @@ uci commit network
 # --- Apply Changes and Restart Services (套用更改與重啟服務) ---
 echo "-------------------------------------------------------"
 echo "Applying changes and restarting services..."
-echo "Your SSH connection will drop. Please reconnect using $LAN_IP."
-echo "SSH 連線將中斷，請稍後使用 $LAN_IP 重新連線。"
+echo "Done! Configuration completed. (配置完成！)"
 echo "-------------------------------------------------------"
 
 /etc/init.d/system restart
