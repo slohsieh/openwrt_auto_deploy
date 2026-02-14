@@ -46,7 +46,7 @@ rm -f /etc/config/ddns
 
 # Remove disk management tools and unused file systems
 # 移除磁碟管理工具與未使用的檔案系統
-opkg remove btrfs-progs mkf2fs libf2fs6 hd-idle luci-app-hd-idle --force-removal-of-dependent-packages
+opkg remove mkf2fs libf2fs6 hd-idle luci-app-hd-idle --force-removal-of-dependent-packages
 
 # Remove wireless firmware (R4S lacks built-in Wi-Fi)
 # 移除無線網卡韌體 (R4S 無內建 Wi-Fi)
