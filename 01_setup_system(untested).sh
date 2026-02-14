@@ -14,12 +14,16 @@ MULTILINE_COMMENT
 # --- Define Variables (定義變數) ---
 TIMEZONE_STR="CST-8"
 TIMEZONE_NAME="Asia/Taipei"
-LAN_IP="192.168.1.1"
 
 # --- System Timezone (系統時區) ---
 echo "Configuring system timezone... (正在配置系統時區...)"
 uci set system.@system[0].zonename="$TIMEZONE_NAME"
 uci set system.@system[0].timezone="$TIMEZONE_STR"
+uci commit system
+
+# --- System: Increase Log Buffer Size (加大系統日誌緩衝區) ---
+echo "Increasing system log buffer size... (正在加大系統日誌緩衝區...)"
+uci set system.@system[0].log_size='1024'
 uci commit system
 
 # --- NTP Settings (NTP 時間同步) ---
@@ -39,11 +43,6 @@ CRON_REBOOT="0 6 * * 1 reboot"
 if ! grep -q "$CRON_REBOOT" /etc/crontabs/root; then
     echo "$CRON_REBOOT" >> /etc/crontabs/root
 fi
-
-# --- Network: LAN IP Address (修改 LAN IP) ---
-echo "Changing LAN IP to $LAN_IP... (正在將 LAN IP 修改為 $LAN_IP...)"
-uci set network.lan.ipaddr="$LAN_IP"
-uci commit network
 
 # --- Network: Disable IPv6 (禁用 IPv6) ---
 echo "Disabling IPv6 for maximum compatibility... (正在禁用 IPv6...)"
