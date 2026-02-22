@@ -31,6 +31,7 @@ mkdir -p /var/lib/tailscale
 # 6. 啟動服務
 echo "啟動 Tailscale 服務..."
 tailscaled --state=/var/lib/tailscale/tailscaled.state --port=41641 &
+tailscale up --accept-dns=false --advertise-exit-node --advertise-routes=192.168.1.0/24
 
 # 7. 提示使用者進行驗證
 echo "-----------------------------------------------"
